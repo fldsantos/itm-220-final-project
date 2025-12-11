@@ -7,8 +7,8 @@ def get_connection():
     try:
         # Preferred: TCP connection (works in container & host if MySQL is listening on 0.0.0.0)
         conn = mysql.connector.connect(
-            host="10.50.73.121",           # change to host's IP if running in a container
-            port=3306,
+            host="4.tcp.us-cal-1.ngrok.io",           # change to host's IP if running in a container
+            port=18740,
             user="root",
             password="adminadmin",  # replace with your MySQL root password
             database="fitness_gym"  # replace with your database name
