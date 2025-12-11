@@ -153,3 +153,4 @@ This template is meant for:
 - Or connect it to a cloud-hosted database (like PlanetScale or MySQL)
 
 ---
+# itm-220-final-project
