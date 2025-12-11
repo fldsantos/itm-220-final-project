@@ -10,8 +10,8 @@ def get_connection():
             host="127.0.0.1",           # change to host's IP if running in a container
             port=3306,
             user="root",
-            password="password",  # replace with your MySQL root password
-            database="my_database"  # replace with your database name
+            password="adminadmin",  # replace with your MySQL root password
+            database="fitness_gym"  # replace with your database name
         )
         return conn
     except mysql.connector.Error as e:
@@ -44,7 +44,7 @@ def update_row(id_val, data):
         conn = get_connection()
         cur = conn.cursor()
         set_clause = ', '.join([f"{col}=%s" for col in data])
-        query = f"UPDATE {TABLE_NAME} SET {set_clause} WHERE id = %s"
+        query = f"UPDATE {TABLE_NAME} SET {set_clause} WHERE member_id = %s"
         cur.execute(query, list(data.values()) + [id_val])
         conn.commit()
     except Exception as e:
@@ -54,7 +54,7 @@ def delete_row(id_val):
     try:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute(f"DELETE FROM {TABLE_NAME} WHERE id = %s", (id_val,))
+        cur.execute(f"DELETE FROM {TABLE_NAME} WHERE member_id = %s", (id_val,))
         conn.commit()
     except Exception as e:
         st.error(f"Error deleting data: {e}")
@@ -78,9 +78,9 @@ with st.form("add_form"):
 
 if rows:
     st.subheader("Update Existing Record")
-    row_ids = [row['id'] for row in rows]
+    row_ids = [row['member_id'] for row in rows]
     selected_id = st.selectbox("Select ID to update", row_ids)
-    selected_row = next((row for row in rows if row['id'] == selected_id), None)
+    selected_row = next((row for row in rows if row['member_id'] == selected_id), None)
 
     if selected_row:
         with st.form("update_form"):
@@ -103,17 +103,17 @@ if not rows or len(rows) < 2:
     st.warning("Not enough records to perform a transfer. Please add more users.")
     st.stop()
 
-st.subheader("Transfer Age Between Users (Transactional)")
+st.subheader("Transfer Points Between Users (Transactional)")
 
-name_id_map = {f"{row['name']} (ID {row['id']})": row['id'] for row in rows}
-id_name_map = {row['id']: row['name'] for row in rows}
-id_age_map = {row['id']: row['age'] for row in rows}
+name_id_map = {f"{row['first_name']} (ID {row['member_id']})": row['member_id'] for row in rows}
+id_name_map = {row['member_id']: row['first_name'] for row in rows}
+id_age_map = {row['member_id']: row['points'] for row in rows}
 
 from_name = st.selectbox("From (User)", list(name_id_map.keys()), key="from_user")
 to_name_options = [n for n in name_id_map.keys() if n != from_name]
 
 if not to_name_options:
-    st.warning("Not enough users to transfer age. Need at least 2 users.")
+    st.warning("Not enough users to transfer points. Need at least 2 users.")
     st.stop()
 
 to_name = st.selectbox("To (User)", to_name_options, key="to_user")
@@ -121,36 +121,36 @@ to_name = st.selectbox("To (User)", to_name_options, key="to_user")
 from_id = name_id_map.get(from_name)
 to_id = name_id_map.get(to_name)
 
-st.markdown(f"**{id_name_map[from_id]}'s current age:** {id_age_map[from_id]}")
-st.markdown(f"**{id_name_map[to_id]}'s current age:** {id_age_map[to_id]}")
+st.markdown(f"**{id_name_map[from_id]}'s current points:** {id_age_map[from_id]}")
+st.markdown(f"**{id_name_map[to_id]}'s current points:** {id_age_map[to_id]}")
 
 amount = st.number_input(
-    "How many years to transfer (subtract from sender and add to recipient)",
+    "How many points to transfer (subtract from sender and add to recipient)",
     min_value=1,
     step=1,
 )
 
-if st.button("Transfer Age"):
+if st.button("Transfer Points"):
     try:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute(f"SELECT age FROM {TABLE_NAME} WHERE id = %s", (from_id,))
+        cur.execute(f"SELECT points FROM {TABLE_NAME} WHERE member_id = %s", (from_id,))
         from_age = cur.fetchone()[0]
-        cur.execute(f"SELECT age FROM {TABLE_NAME} WHERE id = %s", (to_id,))
+        cur.execute(f"SELECT points FROM {TABLE_NAME} WHERE member_id = %s", (to_id,))
         to_age = cur.fetchone()[0]
 
         if from_age < amount:
-            st.error("Not enough age to transfer!")
+            st.error("Not enough points to transfer!")
         else:
             cur.execute(
-                f"UPDATE {TABLE_NAME} SET age = age - %s WHERE id = %s",
+                f"UPDATE {TABLE_NAME} SET points = points - %s WHERE member_id = %s",
                 (amount, from_id)
             )
             cur.execute(
-                f"UPDATE {TABLE_NAME} SET age = age + %s WHERE id = %s",
+                f"UPDATE {TABLE_NAME} SET points = points + %s WHERE member_id = %s",
                 (amount, to_id)
             )
             conn.commit()
-            st.success("Age transferred successfully!")
+            st.success("Points transferred successfully!")
     except Exception as e:
         st.error(f"Transfer failed: {e}")
