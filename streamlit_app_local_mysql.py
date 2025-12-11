@@ -7,7 +7,7 @@ def get_connection():
     try:
         # Preferred: TCP connection (works in container & host if MySQL is listening on 0.0.0.0)
         conn = mysql.connector.connect(
-            host="10.50.73.121",           # change to host's IP if running in a container
+            host="https://itm-220-final-project-felipe-dossantos.streamlit.app/",           # change to host's IP if running in a container
             port=3306,
             user="root",
             password="adminadmin",  # replace with your MySQL root password
